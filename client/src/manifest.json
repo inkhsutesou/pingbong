@@ -1,0 +1,21 @@
+{
+  "name": "πngBong",
+  "short_name": "PingBong",
+  "start_url": "/pingbong/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b1221",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/pingbong/assets/icons/android-chrome-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/pingbong/assets/icons/android-chrome-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<link rel="preconnect" href="https://fonts.gstatic.com">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		<meta name="google" content="notranslate">
+		<meta name="mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<link rel="apple-touch-icon" href="/pingbong/assets/icons/apple-touch-icon.png">
+		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+		<meta property="og:image:width" content="1200">
+		<meta property="og:image:height" content="628">
+		<meta name="description" content="Multiplayer circle table tennis game with power-ups. Play team vs team, or free for all.">
+		<meta property="og:description" content="Multiplayer circle table tennis game with power-ups. Play team vs team, or free for all.">
+		<meta property="og:title" content="PingBong">
+		<meta property="og:url" content="https://niels-mats.be/pingbong">
+		<meta property="og:image" content="https://niels-mats.be/pingbong/assets/og-image.jpg">
+		<title><% preact.title %></title>
+		<script>
+		// Outdated Android browser?
+		if(navigator.userAgent.indexOf('Mozilla/5.0 (Linux; Android')==0&&navigator.userAgent.indexOf(' Mobile ')>0){
+		var m=navigator.userAgent.match(/Chrome\/(\d+)/);
+		if(m&&m.length==2){
+			if(+m[1]<51&&confirm('The WebView installed on your device is outdated. Do you want to open the Play Store and update?')){ window.open('https://play.google.com/store/apps/details?id=com.google.android.webview') }
+		}
+		}
+		</script>
+		<% preact.headEnd %>
+	</head>
+	<body>
+		<% preact.bodyEnd %>
+	</body>
+</html>
