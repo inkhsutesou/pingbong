@@ -2,12 +2,21 @@
 
 Beware, this project was made in a hurry. Here be dragons.
 
-Development lokaal runnen:
-* De server binary zit in de dist folder. Er wordt geluisterd op port 4242.
-* `npm start` in de client folder (eerste keer wel `npm i`).
+## Installing the dependencies
 
-Deployment public:
-* De server luistert op port 4242, en served static content vanaf de dist/static folder. Dus de client public html en js files moeten daarin.
-* `npm run build` maakt een distribution build.
-* reverse proxy warning: Add deze setting: `proxy_read_timeout 1800s;`.
-* htaccess eventueel voor de preact paths
+The project is structured with two folders: client and server.
+The client is written in JS and uses npm as a package manager.
+The server is Rust, and uses the nighly toolchain (unfortunately can't use stable mainly due to package dependencies).
+
+```bash
+cd client
+npm i
+cd ../server
+cargo r -- 0.0.0.0:4242 # Will pull the dependencies and run with binding to all network interfaces on port 4242.
+```
+
+## Deployment public
+
+You can use a reverse proxy such as nginx.
+There's a .htaccess file for the client build.
+`npm run build` will create a distribution buid.
