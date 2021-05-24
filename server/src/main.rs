@@ -1,4 +1,5 @@
 #![feature(map_first_last)]
+#![feature(cell_update)]
 #![allow(clippy::new_without_default)]
 #![allow(clippy::mistyped_literal_suffixes)]
 #![allow(clippy::many_single_char_names)]
@@ -10,13 +11,17 @@ mod bincode;
 #[macro_use]
 mod util;
 mod ball;
+mod bot;
 mod circular_buffer;
 mod player;
+mod player_container;
 mod powerup;
 mod protocol;
 mod room;
 mod room_manager;
+mod shared_room_data;
 mod team_data;
+mod tracker;
 mod vector;
 
 use crate::player::accept_connection;

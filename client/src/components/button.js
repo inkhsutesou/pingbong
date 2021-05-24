@@ -15,7 +15,7 @@ export default function Button(props) {
             border-b-4
             hover:border-${color}-600 focus:ring-2 focus:ring-${color}-800 focus:ring-opacity-75
             disabled:opacity-50 disabled:cursor-not-allowed
-            focus:btn ${className ?? ''}`}
+            focus:btn ${className || ''}`}
             {...others}
         >{children}</button>
     );

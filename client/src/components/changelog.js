@@ -1,5 +1,30 @@
 import Modal from "./modal";
 
+export const CHANGELOG = {
+    '0.9.9': (
+        <>
+            <li>Game back online</li>
+            <li>Lobby fixes</li>
+            <li>Added bots</li>
+            <li>Fixed some collision clipping issues with high ping</li>
+            <li>Always display achievement description</li>
+            <li>UI tweaks</li>
+        </>
+    ),
+    '0.9.8': (
+        <>
+            <li>Tweaked parameters</li>
+            <li>Added achievements</li>
+            <li>Improved Firefox performance</li>
+        </>
+    ),
+    '0.9.7': (
+        <li>First public test version</li>
+    ),
+};
+
+export const LATEST_VERSION = Object.keys(CHANGELOG)[0];
+
 export default function Changelog(props) {
     return (
         <Modal onClose={props.onClose}>
@@ -7,16 +32,16 @@ export default function Changelog(props) {
                 Changelog
             </h3>
             <div className="mt-3">
-                <h4 className="text-xl">0.9.8</h4>
-                <ul className="text-sm list-disc list-inside">
-                    <li>Tweaked parameters</li>
-                    <li>Added achievements</li>
-                    <li>Improved Firefox performance</li>
-                </ul>
-                <h4 className="text-xl mt-2">0.9.7</h4>
-                <ul className="text-sm list-disc list-inside">
-                    <li>First public test version</li>
-                </ul>
+                {Object.keys(CHANGELOG).map((version, index) => {
+                    return (
+                        <>
+                            <h4 className={`text-xl ${index > 0 ? 'mt-2' : ''}`}>{version}</h4>
+                            <ul className="text-sm list-disc list-inside">
+                                {CHANGELOG[version]}
+                            </ul>
+                        </>
+                    );
+                })}
             </div>
         </Modal>
     );

@@ -18,8 +18,9 @@ smallvec = { version = "1.6.1", features = ["serde"] }
 atomic = "0.5"
 static_assertions = "1.1.0"
 rand = { version = "0.8.3", features = ["small_rng"] }
-packed_simd_2 = "0.3.4"
 chrono = "0.4"
+fnv = "1.0.7"
+core_simd = { git = "https://github.com/rust-lang/stdsimd.git", package = "core_simd" }
 
 [profile.dev]
 opt-level = 1

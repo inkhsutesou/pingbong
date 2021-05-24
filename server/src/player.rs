@@ -56,6 +56,7 @@ pub struct Client {
     ip: IpAddr,
 }
 
+#[derive(Copy, Clone)]
 pub struct BallHit {
     pos: f32,
     id: NonZeroU8,
@@ -89,7 +90,6 @@ pub struct Player {
     max_pos: f32,
     w_angle: f32,
     move_seq_nr: SeqNr,
-    client: Client,
     team_nr: u8,
     bounds: PlayerBB,
     name: String,
@@ -99,6 +99,8 @@ pub struct Player {
 pub struct PlayerBB {
     pub tl: Vector,
     pub tr: Vector,
+    pub bl: Vector,
+    pub br: Vector,
 }
 
 impl Default for PlayerBB {
@@ -106,13 +108,15 @@ impl Default for PlayerBB {
         Self {
             tl: Vector::zero(),
             tr: Vector::zero(),
+            bl: Vector::zero(),
+            br: Vector::zero(),
         }
     }
 }
 
 impl Player {
     /// Creates a new Player.
-    pub fn new(client: Client, name: String, team_nr: u8) -> Self {
+    pub fn new(name: String, team_nr: u8) -> Self {
         Self {
             pos: 0.0,
             ball_hit: None,
@@ -123,7 +127,6 @@ impl Player {
             w_angle: 0.0,
             move_seq_nr: 0,
             name,
-            client,
             team_nr,
             bounds: Default::default(),
         }
@@ -195,20 +198,6 @@ impl Player {
         self.w_angle
     }
 
-    #[inline]
-    pub fn client_mut(&mut self) -> &mut Client {
-        &mut self.client
-    }
-
-    #[inline]
-    pub fn client(&self) -> &Client {
-        &self.client
-    }
-
-    pub fn into_client(self) -> Client {
-        self.client
-    }
-
     /// Setup for playing.
     pub fn setup(
         &mut self,
@@ -227,7 +216,7 @@ impl Player {
             + (my_part_size - self.w_angle) * 0.5;
 
         self.pos = pos;
-        self.recalc_bounds();
+        self.recalculate_bounds();
     }
 
     /// Setup: min_pos, max_pos & w_angle.
@@ -256,25 +245,34 @@ impl Player {
         self.setup_min_max_angle(team_angle, nr_teams, max_in_team, extra_factor);
         let diff_w_angle = (self.w_angle - old_w_angle) * 0.5;
         self.pos = clampf32(self.pos - diff_w_angle, self.min_pos, self.max_pos);
-        self.recalc_bounds();
+        self.recalculate_bounds();
+    }
+
+    /// Calculates bounds, standalone version.
+    pub fn calculate_bounds_for(pos: f32, hipos: f32) -> PlayerBB {
+        const LINE_WIDTH: f32 = 10.0;
+        const OFFSET_HEIGHT_COLLISION_BOX: f32 = 3.0;
+        const FACTOR_RIGHT: f32 = CIRCLE_RADIUS + (LINE_WIDTH + OFFSET_HEIGHT_COLLISION_BOX + PLAYER_W_PADDING + BALL_RADIUS) / 2.0;
+        const FACTOR_LEFT: f32 =
+            CIRCLE_RADIUS - (LINE_WIDTH - OFFSET_HEIGHT_COLLISION_BOX + PLAYER_W_PADDING + BALL_RADIUS) / 2.0;
+        let (si1, co1) = (pos - BALL_RADIUS_ANGLE).sin_cos();
+        let (si2, co2) = (hipos + BALL_RADIUS_ANGLE).sin_cos();
+        let tl = Vector::new(co2 * FACTOR_LEFT + FIELD_WIDTH / 2.0, si2 * FACTOR_LEFT + FIELD_HEIGHT / 2.0);
+        let tr = Vector::new(co1 * FACTOR_LEFT + FIELD_WIDTH / 2.0, si1 * FACTOR_LEFT + FIELD_HEIGHT / 2.0);
+        const SHIFT: f32 = 0.030543261909900768;
+        let (si1, co1) = (pos + SHIFT - BALL_RADIUS_ANGLE).sin_cos();
+        let (si2, co2) = (hipos - SHIFT + BALL_RADIUS_ANGLE).sin_cos();
+        let bl = Vector::new(co2 * FACTOR_RIGHT + FIELD_WIDTH / 2.0, si2 * FACTOR_RIGHT + FIELD_HEIGHT / 2.0);
+        let br = Vector::new(co1 * FACTOR_RIGHT + FIELD_WIDTH / 2.0, si1 * FACTOR_RIGHT + FIELD_HEIGHT / 2.0);
+        PlayerBB {
+            tl, tr, bl, br
+        }
     }
 
     /// Recalculate bounds.
-    fn recalc_bounds(&mut self) {
+    fn recalculate_bounds(&mut self) {
         let (pos, hipos) = self.past_pos_bounds();
-
-        const FACTOR_LEFT: f32 =
-            CIRCLE_RADIUS - (10.0 - 3.0 + PLAYER_W_PADDING + BALL_RADIUS) / 2.0;
-        let (si1, co1) = (pos - BALL_RADIUS_ANGLE).sin_cos();
-        let (si2, co2) = (hipos + BALL_RADIUS_ANGLE).sin_cos();
-        let tlx = co2 * FACTOR_LEFT + FIELD_WIDTH / 2.0;
-        let trx = co1 * FACTOR_LEFT + FIELD_WIDTH / 2.0;
-        //let tmy = ((hipos + pos) / 2.0).sin() * FACTOR_LEFT + FIELD_HEIGHT / 2.0;
-        self.bounds = PlayerBB {
-            tl: Vector::new(tlx, si2 * FACTOR_LEFT + FIELD_HEIGHT / 2.0),
-            tr: Vector::new(trx, si1 * FACTOR_LEFT + FIELD_HEIGHT / 2.0),
-            //tm: Vector((tlx + trx) / 2.0, tmy),
-        };
+        self.bounds = Self::calculate_bounds_for(pos, hipos);
     }
 
     /// Queue a move action.
@@ -310,8 +308,8 @@ impl Player {
     }
 
     /// Get ball hit.
-    pub fn ball_hit(&self) -> Option<&BallHit> {
-        self.ball_hit.as_ref()
+    pub fn ball_hit(&self) -> Option<BallHit> {
+        self.ball_hit
     }
 
     /// Reset ball hit.
@@ -338,7 +336,7 @@ impl Player {
     pub fn tick(&mut self, id: ClientId) -> Option<ClientSync> {
         let has_moved = self.has_moved();
         if has_moved {
-            self.recalc_bounds();
+            self.recalculate_bounds();
             self.move_count = 0;
         }
 
@@ -551,6 +549,14 @@ pub async fn player_connected(
                     let _ = inbox
                         .send(MessageToInbox::UpdateSettings(join_data.id, s))
                         .await;
+                }
+
+                RoomMessageFromClient::AddBot => {
+                    let _ = inbox.send(MessageToInbox::AddBot(join_data.id)).await;
+                }
+
+                RoomMessageFromClient::RemoveBot => {
+                    let _ = inbox.send(MessageToInbox::RemoveBot(join_data.id)).await;
                 }
             },
             PacketResult::Ignore => {}

@@ -12,6 +12,7 @@ import {getPing, updateSRTT} from "../components/app";
 import {HIGH_PING_THRESHOLD} from "../config";
 import AchievementPage from "../components/achievementpage";
 import { isBrowserProblematicForFilters } from "../post-processing/filtertracker";
+import Trailer from "../components/trailer";
 
 let _errorMsg;
 
@@ -24,7 +25,7 @@ export function setLobbyError(msg) {
 
 const BallDiv = (props) => {
     return (
-        <div {...props} className={`w-3 h-3 bg-white rounded-full inline-block ${props.className ?? ''}`} />
+        <div {...props} className={`w-3 h-3 bg-white rounded-full inline-block ${props.className || ''}`} />
     );
 };
 
@@ -88,7 +89,7 @@ const Lobby = (props) => {
         refreshRooms();
 
         // Auto-refresh interval
-        const refreshInterval = setInterval(refreshRooms, 5000);
+        const refreshInterval = setInterval(refreshRooms, 1000);
 
         return () => {
             clearInterval(refreshInterval);
@@ -116,7 +117,7 @@ const Lobby = (props) => {
                         <span className="hidden sm:inline">Achievements</span>
                     </Button>
                     {showAchievements && (<AchievementPage onClose={() => setShowAchievements(false)} />)}
-                    <Button color="red" onClick={_e => props.onLogout()}><Icon name="sign-out" /></Button>
+                    <Button color="red" onClick={_e => props.onLogout()}><Icon name="sign-out" /><span className="hidden sm:inline">Change name</span></Button>
                 </div>
             </div>
             {rooms ? (
@@ -174,7 +175,17 @@ const Lobby = (props) => {
                     </table>
                     )
                     :
-                    (<p class="mt-5 text-center">No waiting rooms yet. Invite some friends!</p>)}
+                    (<div className="mt-8 text-center">
+                        No waiting rooms yet.<br />Invite some friends or create a room with bots!
+                        <br />
+                        <Button className="mt-5" color="green" onClick={_e => {
+                            getConnection().sendByte(OP_SEND_CREATEROOM);
+                        }}><Icon name="plus-circle" className="btn-icon" /><span className="hidden sm:inline">Create room</span></Button>
+                        <div className="mt-8">
+                            <p className="mb-2 text-sm text-gray-400">Or watch some gameplay</p>
+                            <Trailer />
+                        </div>
+                    </div>)}
                 </>
             ) : (<Loading />)}
         </>

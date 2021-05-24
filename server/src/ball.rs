@@ -6,7 +6,8 @@ use crate::room::{CIRCLE_RADIUS, FIELD_HEIGHT, FIELD_WIDTH};
 use crate::util::clampf32;
 use crate::vector::Vector;
 use serde::Serialize;
-use std::collections::btree_map::Values;
+use std::cell::RefCell;
+use std::collections::hash_map::Values;
 use std::iter::Filter;
 
 pub const MOVEMENT_BUFFER_CAP: usize = 6;
@@ -16,6 +17,9 @@ pub const BALL_RADIUS_ANGLE: f32 = 0.031_989_083; //(BALL_RADIUS / CIRCLE_RADIUS
 pub const SPIN_MAX: f32 = 0.05;
 pub const NO_TEAM: u8 = 0b1111;
 const MAX_RALLIES: u8 = 5;
+
+type PlayerIter<'a, 'b> =
+    Filter<Values<'a, ClientId, RefCell<Player>>, &'b dyn Fn(&&RefCell<Player>) -> bool>;
 
 #[derive(Copy, Clone)]
 pub struct RoomDataForBall {
@@ -167,11 +171,18 @@ impl Ball {
         self.moves.push(rewritten_history);
     }
 
+    /// Calculates the spin direction modification.
+    pub fn calculate_direction_modification(dir: Vector, spin: f32, delta: f32) -> Vector {
+        // How much should move in a single 60FPS frame.
+        const ACC: f32 = 0.25; // Includes mass et al.
+        dir - dir.perp() * spin * ACC * delta
+    }
+
     /// Tick without updating self state.
     pub fn tick_no_update(
         &self,
         room_data: RoomDataForBall,
-        player_iter: Filter<Values<'_, ClientId, Player>, &dyn Fn(&&Player) -> bool>,
+        player_iter: PlayerIter,
         time_index: usize,
     ) -> (BallTickResult, Option<PowerUpEffect>, BallHistoryData) {
         let last = self.moves[time_index];
@@ -188,23 +199,17 @@ impl Ball {
             last.base.spin
         };
 
-        // How much should move in a single 60FPS frame.
-        const ACC: f32 = 0.25; // Includes mass et al.
-        let new_dir = last.base.dir - last.base.dir.perp() * spin * ACC * room_data.delta;
+        let new_dir = Self::calculate_direction_modification(last.base.dir, spin, room_data.delta);
         let new = last.base.pos + new_dir * room_data.delta;
         let newh = new - Vector::new(FIELD_WIDTH / 2.0, FIELD_HEIGHT / 2.0);
 
         // Player collision checking.
         let mut pt = None;
         if !last.ignore_player_collision {
-            let angle = newh.angle();
-            let angle = if angle < 0.0 {
-                angle + std::f32::consts::PI * 2.0
-            } else {
-                angle
-            };
+            let angle = newh.angle_positive();
             for player in player_iter {
                 // Filter players to make this less expensive
+                let player = player.borrow();
                 let (pos, hipos) = player.past_pos_bounds();
                 if pos > angle + BALL_RADIUS_ANGLE || hipos < angle - BALL_RADIUS_ANGLE {
                     continue;
@@ -213,9 +218,10 @@ impl Ball {
                 let bb = player.bounds();
                 let spin = player.spin();
 
-                if let Some(local_pt) = last.base.collide(new, bb.tl, bb.tr, spin)
-                //.collide(new, bb.tl, bb.tm, bb.tr, spin)
-                //.or_else(|| last.base.collide(new, bb.tr, bb.tm, bb.tl, spin))
+                if let Some(local_pt) = last
+                    .base
+                    .collide(new, bb.tl, bb.tr, spin)
+                    .or_else(|| last.base.collide(new, bb.bl, bb.br, spin))
                 {
                     pt = Some((local_pt, player.team_nr()));
                     break;
@@ -237,48 +243,61 @@ impl Ball {
             }
         }
 
+        let generate_clean_history = || BallHistoryData {
+            base: BallData {
+                pos: new,
+                dir: new_dir,
+                spin: last.base.spin,
+            },
+            ignore_player_collision: false,
+            hit_pair: last.hit_pair,
+            rally: last.rally,
+        };
+
         if let Some((pt, hit_team)) = pt {
             // First calculate the normal
             let n = (pt.2 - pt.1).perp().normalized();
+            //debug!("{:?}", n);
 
             // 2 * dot(d, n)
             let dot = 2.0 * n.dot(new_dir);
 
-            // Reflection
-            let new_dir = new_dir - n * dot;
-            //debug!(
-            //    "ball: Bounce {} {} {} {} {}",
-            //    pt.0, pt.1, new_dx, new_dy, pt.6
-            //);
+            // Dot product will be more and more positive if roughly pointing to the same direction.
+            // In that case, ignore the collision because it's a double.
+            if dot <= 0.0 {
+                // Reflection
+                let new_dir = new_dir - n * dot;
+                //debug!(
+                //    "ball: Bounce {} {} {} {} {}",
+                //    pt.0, pt.1, new_dx, new_dy, pt.6
+                //);
 
-            // Spin
-            let spin = clampf32(last.base.spin * 0.5 + pt.3, -SPIN_MAX, SPIN_MAX);
+                // Spin
+                let spin = clampf32(last.base.spin * 0.5 + pt.3, -SPIN_MAX, SPIN_MAX);
 
-            (
-                BallTickResult::Bounce,
-                power_up_effect,
-                BallHistoryData {
-                    base: BallData {
-                        pos: pt.0,
-                        dir: new_dir,
-                        spin,
+                (
+                    BallTickResult::Bounce,
+                    power_up_effect,
+                    BallHistoryData {
+                        base: BallData {
+                            pos: pt.0,
+                            dir: new_dir,
+                            spin,
+                        },
+                        ignore_player_collision: true,
+                        hit_pair: HitPair::new(hit_team, NO_TEAM),
+                        rally: last.rally.wrapping_add(1).min(MAX_RALLIES),
                     },
-                    ignore_player_collision: true,
-                    hit_pair: HitPair::new(hit_team, NO_TEAM),
-                    rally: last.rally.wrapping_add(1).min(MAX_RALLIES),
-                },
-            )
+                )
+            } else {
+                (
+                    BallTickResult::None,
+                    power_up_effect,
+                    generate_clean_history(),
+                )
+            }
         } else {
-            let mut history = BallHistoryData {
-                base: BallData {
-                    pos: new,
-                    dir: new_dir,
-                    spin: last.base.spin,
-                },
-                ignore_player_collision: false,
-                hit_pair: last.hit_pair,
-                rally: last.rally,
-            };
+            let mut history = generate_clean_history();
 
             const THRESHOLD: f32 = CIRCLE_RADIUS + 125.0;
             // Check if outside the circle.
@@ -308,7 +327,7 @@ impl Ball {
     pub fn tick(
         &mut self,
         room_data: RoomDataForBall,
-        player_iter: Filter<Values<'_, ClientId, Player>, &dyn Fn(&&Player) -> bool>,
+        player_iter: PlayerIter,
         time_index: usize,
     ) -> (BallTickResult, Option<PowerUpEffect>) {
         let (result, power_up_effect, history) =

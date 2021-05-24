@@ -1,7 +1,8 @@
 use crate::ball::{Ball, HitPair};
 use crate::player::{Client, ClientId, SeqNr};
 use crate::powerup::PowerUp;
-use crate::room::{MatchTime, SharedRoomData};
+use crate::room::MatchTime;
+use crate::shared_room_data::SharedRoomData;
 use crate::vector::Vector;
 use futures::channel::oneshot;
 use serde::{Deserialize, Serialize};
@@ -160,6 +161,8 @@ pub enum RoomMessageFromClient {
     Leave,
     Start,
     UpdateSettings(UpdateSettings),
+    AddBot,
+    RemoveBot,
 }
 
 #[derive(Deserialize)]
@@ -189,4 +192,6 @@ pub enum MessageToInbox {
     MovePlayer(ClientId, ClientMoveUpdate),
     Start(ClientId),
     UpdateSettings(ClientId, UpdateSettings),
+    AddBot(ClientId),
+    RemoveBot(ClientId),
 }

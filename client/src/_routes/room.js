@@ -1,6 +1,18 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getConnection, getName } from "..";
-import { OP_SEND_LEAVEROOM, OP_SEND_STARTROOM, OP_SEND_JOINROOM, OP_RECV_JOINEDROOM, OP_RECV_STARTROOM, OP_RECV_JOINROOM, OP_RECV_LEAVEROOM, OP_RECV_ROOMJOINERROR, OP_SEND_SETTINGS, OP_RECV_SETTINGS } from "../network";
+import {
+    OP_SEND_LEAVEROOM,
+    OP_SEND_STARTROOM,
+    OP_SEND_JOINROOM,
+    OP_RECV_JOINEDROOM,
+    OP_RECV_STARTROOM,
+    OP_RECV_JOINROOM,
+    OP_RECV_LEAVEROOM,
+    OP_RECV_ROOMJOINERROR,
+    OP_SEND_SETTINGS,
+    OP_RECV_SETTINGS,
+    OP_SEND_ADD_BOT, OP_SEND_REMOVE_BOT
+} from "../network";
 import { FIELD_WIDTH, FIELD_HEIGHT, CANVAS_PADDING, TEAM_COLORS } from "../config";
 import PlayState from '../playstate';
 import { Input } from '../input/input';
@@ -191,6 +203,7 @@ const Room = (props) => {
     };
 
     const joinRoomHandler = (view) => {
+        console.log("join room handler");
         setPlayers(players => {
             const newPlayers = [...players];
             newPlayers.push(decodePlayer(view));
@@ -320,97 +333,114 @@ const Room = (props) => {
                     }}><Icon name="copy" /><span id="copy-url-label">{joinUrlLabel}</span></Button>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 mt-5">
-                    <div className="rounded-md bg-gray-900 p-6 shadow-sm">
-                        <h2 className="text-3xl mb-4">Settings</h2>
-                        <div className="flex items-center mb-2">
-                            <label
-                                htmlFor="ball-input-number"
-                                className="text-gray-400 w-40 text-sm font-semibold"
-                            >
-                                Amount of balls
-                            </label>
-                            {clientId === hostId ? (
-                                <div className="flex flex-row h-8 rounded-lg relative bg-transparent">
-                                    <button
-                                        className="transition-all bg-gray-800 text-white hover:bg-gray-700 h-full w-8 rounded-l cursor-pointer"
-                                        onClick={_ => setBalls(balls - 1)}
-                                    >
-                                        <span className="text-1xl"><Icon name="minus" /></span>
-                                    </button>
-                                    <input
-                                        type="number"
-                                        className="transition-all text-center w-12 bg-gray-800 hover:bg-gray-700 focus:bg-gray-700 font-semibold flex items-center text-white"
-                                        id="ball"
-                                        min={MIN_BALLS}
-                                        max={MAX_BALLS}
-                                        onChange={e => setBalls(e.currentTarget.value)}
-                                        value={balls}
-                                    />
-                                    <button
-                                        className="transition-all bg-gray-800 text-white hover:bg-gray-700 h-full w-8 rounded-r cursor-pointer"
-                                        onClick={_ => setBalls(balls + 1)}
-                                    >
-                                        <span className="text-1xl"><Icon name="plus" /></span>
-                                    </button>
-                                </div>
-                            ) : (
-                                <span className="text-white text-sm font-semibold">{balls}</span>
-                            )}
-                        </div>
-                        <div className="flex items-center mb-2">
-                            <label htmlFor="enable-powerups" className="text-gray-400 w-40 text-sm font-semibold">Power-ups</label>
-                            <Switch id="enable-powerups" className="" disabled={clientId !== hostId} checked={powerUps} setChecked={setPowerUps} />
-                        </div>
-                        <div className="flex items-center mb-2">
-                            <label htmlFor="enable-spin-towards-center" className="text-gray-400 w-40 text-sm font-semibold">Gravity towards center</label>
-                            <Switch id="enable-spin-towards-center" className="" disabled={clientId !== hostId} checked={spinTowardsCenter} setChecked={setSpinTowardsCenter} />
-                        </div>
-                        <div className="flex items-center mb-2">
-                            <label className="text-gray-400 w-40 text-sm font-semibold">Match duration</label>
-                            <div className="flex flex-col">
-                                {hostId === clientId ? (
-                                    <>
-                                        {[0, 1].map(i => (
-                                            <div className="inline-flex items-center">
-                                                <input
-                                                    disabled={clientId !== hostId}
-                                                    onchange={_e => setMatchTime(i)}
-                                                    type="radio"
-                                                    className="h-5 w-5 text-green-600 cursor-pointer"
-                                                    checked={matchTime === i}
-                                                />
-                                                <span className="ml-2 text-white text-sm font-semibold">{matchTimeStrFromNr(i)}</span>
-                                            </div>
-                                        ))}
-                                    </>
+                    <div className="rounded-md bg-gray-900 p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h2 className="text-3xl mb-4">Settings</h2>
+                            <div className="flex items-center mb-2">
+                                <label
+                                    htmlFor="ball-input-number"
+                                    className="text-gray-400 w-40 text-sm font-semibold"
+                                >
+                                    Amount of balls
+                                </label>
+                                {clientId === hostId ? (
+                                    <div className="flex flex-row h-8 rounded-lg relative bg-transparent">
+                                        <button
+                                            className="transition-all bg-gray-800 text-white hover:bg-gray-700 h-full w-8 rounded-l cursor-pointer"
+                                            onClick={_ => setBalls(balls - 1)}
+                                        >
+                                            <span className="text-1xl"><Icon name="minus" /></span>
+                                        </button>
+                                        <input
+                                            type="number"
+                                            className="transition-all text-center w-12 bg-gray-800 hover:bg-gray-700 focus:bg-gray-700 font-semibold flex items-center text-white"
+                                            id="ball"
+                                            min={MIN_BALLS}
+                                            max={MAX_BALLS}
+                                            onChange={e => setBalls(e.currentTarget.value)}
+                                            value={balls}
+                                        />
+                                        <button
+                                            className="transition-all bg-gray-800 text-white hover:bg-gray-700 h-full w-8 rounded-r cursor-pointer"
+                                            onClick={_ => setBalls(balls + 1)}
+                                        >
+                                            <span className="text-1xl"><Icon name="plus" /></span>
+                                        </button>
+                                    </div>
                                 ) : (
-                                    <span className="text-white text-sm font-semibold">{matchTimeStrFromNr(matchTime)}</span>
+                                    <span className="text-white text-sm font-semibold">{balls}</span>
                                 )}
+                            </div>
+                            <div className="flex items-center mb-2">
+                                <label htmlFor="enable-powerups" className="text-gray-400 w-40 text-sm font-semibold">Power-ups</label>
+                                <Switch id="enable-powerups" className="" disabled={clientId !== hostId} checked={powerUps} setChecked={setPowerUps} />
+                            </div>
+                            <div className="flex items-center mb-2">
+                                <label htmlFor="enable-spin-towards-center" className="text-gray-400 w-40 text-sm font-semibold">Gravity towards center</label>
+                                <Switch id="enable-spin-towards-center" className="" disabled={clientId !== hostId} checked={spinTowardsCenter} setChecked={setSpinTowardsCenter} />
+                            </div>
+                            <div className="flex items-center mb-2">
+                                <label className="text-gray-400 w-40 text-sm font-semibold">Match duration</label>
+                                <div className="flex flex-col">
+                                    {hostId === clientId ? (
+                                        <>
+                                            {[0, 1].map(i => (
+                                                <div className="inline-flex items-center">
+                                                    <input
+                                                        disabled={clientId !== hostId}
+                                                        onchange={_e => setMatchTime(i)}
+                                                        type="radio"
+                                                        className="h-5 w-5 text-green-600 cursor-pointer"
+                                                        checked={matchTime === i}
+                                                    />
+                                                    <span className="ml-2 text-white text-sm font-semibold">{matchTimeStrFromNr(i)}</span>
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <span className="text-white text-sm font-semibold">{matchTimeStrFromNr(matchTime)}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="mt-5">
                             {hostId === clientId ? (
-                                <Button
-                                    color="green"
-                                    disabled={players.length < 1 /* doesn't include own player */}
-                                    onClick={_e => {
-                                        getConnection().sendByte(OP_SEND_STARTROOM);
-                                    }}>
-                                    <Icon name="check-circle" /><span>Start match</span>
-                                </Button>
+                                <>
+                                    {players.length < 1 ? (<p className="text-sm text-gray-400">You need at least one more player or bot.</p>) : <></>}
+                                    <Button
+                                        color="green"
+                                        disabled={players.length < 1 /* doesn't include own player */}
+                                        onClick={_e => {
+                                            getConnection().sendByte(OP_SEND_STARTROOM);
+                                        }}>
+                                        <Icon name="check-circle" /><span>Start match</span>
+                                    </Button>
+                                </>
                             ) : (
                                 <p>Waiting for {players.find(p => p.clientId === hostId).name} to start the match.</p>
                             )}
                         </div>
                     </div>
-                    <div className="rounded-md bg-gray-900 p-6 shadow-sm">
-                        <h2 className="text-3xl mb-2">Players</h2>
-                        <ul className="list-disc list-inside break-words">
-                            <li>{getName()} (you)</li>
-                            {players.map(p => (
-                                <li key={p.clientId}>{p.name}</li>
-                            ))}
-                        </ul>
+                    <div className="rounded-md bg-gray-900 p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h2 className="text-3xl mb-2">Players</h2>
+                            <ul className="list-disc list-inside break-words">
+                                <li>{getName()} (you)</li>
+                                {players.map(p => (
+                                    <li key={p.clientId}>{p.name}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        {hostId === clientId && (
+                            <div className="mt-5">
+                                <Button color="green" className="mr-2" onClick={_e => getConnection().sendByte(OP_SEND_ADD_BOT)}>
+                                    <Icon name="plus-circle" className="btn-icon" /><span>Add bot</span>
+                                </Button>
+                                <Button color="red" onClick={_e => getConnection().sendByte(OP_SEND_REMOVE_BOT)}>
+                                    <Icon name="minus-circle" className="btn-icon" /><span>Remove bot</span>
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </>

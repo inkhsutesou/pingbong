@@ -40,9 +40,6 @@
     "webpack-obfuscator": "^2.5.0"
   },
   "dependencies": {
-    "@capacitor/android": "^2.4.6",
-    "@capacitor/cli": "^2.4.6",
-    "@capacitor/core": "^2.4.6",
     "autoprefixer": "^9.8.6",
     "preact": "^10.5.12",
     "preact-render-to-string": "^5.1.12",

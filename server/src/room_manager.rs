@@ -1,5 +1,6 @@
 use crate::protocol::MessageToInbox;
-use crate::room::{room_loop, SharedRoomData};
+use crate::room::room_loop;
+use crate::shared_room_data::SharedRoomData;
 use chrono::Local;
 use futures::channel::mpsc::{self, UnboundedSender};
 use std::collections::HashMap;
@@ -146,7 +147,7 @@ impl RoomManager {
     /// Mark a room as playing.
     pub fn mark_as_playing(&mut self, id: RoomId) {
         if let Some(room_data) = self.rooms.remove(&id) {
-            println!("[{}] play {}", Local::now().format("%d-%m %H:%M"), id);
+            println!("[{}] play {:x}: {} {:?}", Local::now().format("%d-%m %H:%M"), id, room_data.shared_data.player_count(), room_data.shared_data.match_time());
             self.playing_rooms.insert(id, room_data);
         }
     }

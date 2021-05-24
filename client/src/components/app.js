@@ -10,7 +10,7 @@ import Error from '../components/error';
 import Lobby from '../_routes/lobby';
 import Room from '../_routes/room';
 import PrivacyPolicy from '../_routes/privacypolicy';
-import Connection, { OP_ACK, OP_RECV_NAMEERROR, OP_RECV_OUTDATED } from '../network';
+import Connection, {createLoginPacket, OP_ACK, OP_RECV_NAMEERROR, OP_RECV_OUTDATED} from '../network';
 import Icon from './icon';
 import Loading from './loading';
 import Credits from './credits';
@@ -19,9 +19,10 @@ import Button from "./button";
 import logo from '../assets/logo.png';
 import {PROTOCOL_VERSION} from "../config";
 import HowToPlay from "./howtoplay";
-import Changelog from "./changelog";
+import Changelog, {LATEST_VERSION} from "./changelog";
 import {setAchievementSpawnCallback} from "../achievement";
 import {AchievementPopup} from "./achievement";
+import Trailer from "./trailer";
 
 export let SOUND_MANAGER;
 export let sRTT;
@@ -118,16 +119,8 @@ const HomePage = (props) => {
 					</div>
 				</form>
 			</div>
-			<div className="mt-8 text-left text-center">
-				<div className="max-w-md middle">
-					<div className="embed-container">
-						<iframe src="https://www.youtube-nocookie.com/embed/x-sk1TGYLCc"
-							frameBorder="0"
-							allow="autoplay; encrypted-media"
-							allowFullScreen
-						/>
-					</div>
-				</div>
+			<div className="mt-8">
+				<Trailer />
 			</div>
 			<div class="mt-3 flex flex-row justify-center">
 				<Button className="mr-2" color="gray" onClick={_e => setShowCredits(true)}><Icon name="book" /><span>Credits</span></Button>
@@ -136,9 +129,16 @@ const HomePage = (props) => {
 				{showHowToPlay && (<HowToPlay onClose={() => setShowHowToPlay(false)} />)}
 				<Button color="gray" onClick={_e => fixedRoute('/privacy-policy')}><Icon name="book" /><span>Privacy policy</span></Button>
 			</div>
-			<div class="mt-3 flex flex-row justify-center">
-				<a className="text-sm text-blue-400 cursor-pointer" onClick={_e => setShowChangelog(true)}>Game version: 0.9.8</a>
-				{showChangelog && (<Changelog onClose={() => setShowChangelog(false)} />)}
+			<div className="mt-3 flex flex-row justify-center">
+				<div className="text-center">
+					<p>
+						<a className="text-sm text-blue-400 cursor-pointer" onClick={_e => setShowChangelog(true)}>Game version: {LATEST_VERSION}</a>
+					</p>
+					{showChangelog && (<Changelog onClose={() => setShowChangelog(false)} />)}
+					<p>
+						<a className="text-sm text-blue-400 cursor-pointer" href="https://github.com/nielsdos/pingbong" target="_blank" rel="noopener noreferrer">Help to contribute at https://github.com/nielsdos/pingbong</a>
+					</p>
+				</div>
 			</div>
 		</>
 	);
@@ -151,13 +151,7 @@ const LoginGuard = () => {
 
 	const executeLogin = (name) => {
 		setIsLoading(true);
-		const encoder = new TextEncoder();
-		const view = encoder.encode(name);
-		const buffer = new Uint8Array(new ArrayBuffer(1 + 1 + 1 + view.length));
-		buffer[0] = 0;
-		buffer[1] = PROTOCOL_VERSION;
-		buffer[2] = view.length;
-		buffer.set(view, 3);
+		const buffer = createLoginPacket(name);
 		const start = Date.now();
 		getConnection().addTempHandler(OP_RECV_OUTDATED, (view) => {
 			const reasons = [

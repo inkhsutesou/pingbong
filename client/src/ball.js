@@ -195,6 +195,7 @@ class Ball {
                 const rect = player.boundingRect;
 
                 pt = this.collide(nx, ny, rect.topLeftX, rect.topLeftY, rect.topRightX, rect.topRightY, player);
+                if(!pt) pt = this.collide(nx, ny, rect.bottomLeftX, rect.bottomLeftY, rect.topRightX, rect.topRightY, player);
                 if(pt) {
                     break;
                 }
@@ -207,15 +208,15 @@ class Ball {
             --this._ignoreServerPositionSyncTimer;
         }
 
+        this.x = nx;
+        this.y = ny;
+
         let result = null;
         if(pt) {
-            this.x = pt.x;
-            this.y = pt.y;
-
             // Circle reflection is useless, because the direction will always be perpendicular on the tangent.
             // Reflection of vector, first calculate the normal
-            let ny = pt.x4 - pt.x3;
-            let nx = pt.y3 - pt.y4;
+            let ny = pt.x3 - pt.x4;
+            let nx = pt.y4 - pt.y3;
             let invMag = 1 / Math.sqrt(nx * nx + ny * ny);
             nx *= invMag;
             ny *= invMag;
@@ -223,27 +224,32 @@ class Ball {
             // 2 * dot(d, n)
             const dot = 2 * (nx * this._dx + ny * this._dy);
 
-            // Reflection
-            const oldDx = this._dx;
-            const oldDy = this._dy;
-            this._dx -= dot * nx;
-            this._dy -= dot * ny;
+            // Dot product will be more and more positive if roughly pointing to the same direction.
+            // In that case, ignore the collision because it's a double.
+            console.log('dot product', dot);
+            if(dot <= 0) {
+                this.x = pt.x;
+                this.y = pt.y;
 
-            result = pt.p;
+                // Reflection
+                const oldDx = this._dx;
+                const oldDy = this._dy;
+                this._dx -= dot * nx;
+                this._dy -= dot * ny;
 
-            // Spin
-            const SPIN_MAX = 0.05;
-            this._spin = clamp(this._spin * 0.5 + result.spin, -SPIN_MAX, SPIN_MAX);
+                result = pt.p;
 
-            this._ignoreCollision = MAX_IGNORE_COLLISION;
-            this._playHitSound(oldDx, oldDy);
+                // Spin
+                const SPIN_MAX = 0.05;
+                this._spin = clamp(this._spin * 0.5 + result.spin, -SPIN_MAX, SPIN_MAX);
 
-            this._hitTeam = result.teamNr;
-            this.rallies = Math.min(this.rallies + 1, MAX_RALLIES);
-            this._ignoreServerPositionSyncTimer = Math.ceil(getInitialDelay() * 0.06) + 1;
-        } else {
-            this.x = nx;
-            this.y = ny;
+                this._ignoreCollision = MAX_IGNORE_COLLISION;
+                this._playHitSound(oldDx, oldDy);
+
+                this._hitTeam = result.teamNr;
+                this.rallies = Math.min(this.rallies + 1, MAX_RALLIES);
+                this._ignoreServerPositionSyncTimer = Math.ceil(getInitialDelay() * 0.06) + 1;
+            }
         }
 
         /*if(this._hitTeam !== NO_TEAM) {

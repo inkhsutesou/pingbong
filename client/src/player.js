@@ -17,6 +17,10 @@ export class Player {
             topLeftY: 0,
             topRightX: 0,
             topRightY: 0,
+            bottomLeftX: 0,
+            bottomLeftY: 0,
+            bottomRightX: 0,
+            bottomRightY: 0,
         };
         this.spin = 0;
         this.pos = pos; // Fix undefined var.
@@ -55,23 +59,25 @@ export class Player {
      * Recalculate bounding rect
      */
     _recalcBoundingRect() {
-        //const factorRight = CIRCLE_RADIUS + (LINE_WIDTH + W_PADDING + BALL_RADIUS) / 2;
+        const factorRight = CIRCLE_RADIUS + (LINE_WIDTH + 3 + W_PADDING + BALL_RADIUS) / 2;
         const factorLeft = CIRCLE_RADIUS - (LINE_WIDTH - 3 + W_PADDING + BALL_RADIUS) / 2;
-        const co1 = Math.cos(this.pos - BALL_RADIUS_ANGLE);
-        const co2 = Math.cos(this.pos + this.wAngle + BALL_RADIUS_ANGLE);
-        const si1 = Math.sin(this.pos - BALL_RADIUS_ANGLE);
-        const si2 = Math.sin(this.pos + this.wAngle + BALL_RADIUS_ANGLE);
-        //const sim = Math.sin(this.pos + this.wAngle / 2);
-        //const bottomRightX = co1 * factorRight + FIELD_WIDTH / 2;
-        //const bottomRightY = si1 * factorRight + FIELD_HEIGHT / 2;
-        //const topMidX = (topLeftX + topRightX) / 2;
-        //const topMidY = sim * factorLeft + FIELD_HEIGHT / 2;
-        //const bottomLeftX = co2 * factorRight + FIELD_WIDTH / 2;
-        //const bottomLeftY = si2 * factorRight + FIELD_HEIGHT / 2;
+        let co1 = Math.cos(this.pos - BALL_RADIUS_ANGLE);
+        let co2 = Math.cos(this.pos + this.wAngle + BALL_RADIUS_ANGLE);
+        let si1 = Math.sin(this.pos - BALL_RADIUS_ANGLE);
+        let si2 = Math.sin(this.pos + this.wAngle + BALL_RADIUS_ANGLE);
         this.boundingRect.topLeftX = co2 * factorLeft + FIELD_WIDTH / 2;
         this.boundingRect.topLeftY = si2 * factorLeft + FIELD_HEIGHT / 2;
         this.boundingRect.topRightX = co1 * factorLeft + FIELD_WIDTH / 2;
         this.boundingRect.topRightY = si1 * factorLeft + FIELD_HEIGHT / 2;
+        const shift = 0.030543261909900768; // 1.75 / 180 * Math.PI;
+        co1 = Math.cos(this.pos + shift - BALL_RADIUS_ANGLE);
+        co2 = Math.cos(this.pos - shift + this.wAngle + BALL_RADIUS_ANGLE);
+        si1 = Math.sin(this.pos + shift - BALL_RADIUS_ANGLE);
+        si2 = Math.sin(this.pos - shift + this.wAngle + BALL_RADIUS_ANGLE);
+        this.boundingRect.bottomLeftX = co2 * factorRight + FIELD_WIDTH / 2;
+        this.boundingRect.bottomLeftY = si2 * factorRight + FIELD_HEIGHT / 2;
+        this.boundingRect.bottomRightX = co1 * factorRight + FIELD_WIDTH / 2;
+        this.boundingRect.bottomRightY = si1 * factorRight + FIELD_HEIGHT / 2;
     }
 
     /**
@@ -142,14 +148,13 @@ export class Player {
         ctx.arc(ctx.canvas.width / 2, ctx.canvas.height / 2, CIRCLE_RADIUS, this.pos + this.wAngle/2 - 0.02, this.pos + this.wAngle/2 + 0.02, false);
         ctx.stroke();*/
 
-        // DEBUG
-        /*const rect = this.boundingRect;
+        /*// DEBUG
+        const rect = this.boundingRect;
         ctx.fillStyle = 'red';
         ctx.fillRect(rect.topLeftX, rect.topLeftY, 2, 2);
         ctx.fillRect(rect.bottomLeftX, rect.bottomLeftY, 2, 2);
         ctx.fillRect(rect.topRightX, rect.topRightY, 2, 2);
-        ctx.fillRect(rect.bottomRightX, rect.bottomRightY, 2, 2);
-        ctx.fillRect(rect.midLeftX, rect.midLeftY, 2, 2);*/
+        ctx.fillRect(rect.bottomRightX, rect.bottomRightY, 2, 2);*/
     }
 }
 

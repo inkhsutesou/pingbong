@@ -81,6 +81,7 @@ class Sound {
                 snd.buffer = this.data;
                 snd.start(0);
             } else {
+                // noinspection JSIgnoredPromiseFromCall
                 this.data.play();
             }
         }
@@ -111,6 +112,7 @@ class Sound {
                 snd.start(0);
             } else {
                 this.data.volume = volume;
+                // noinspection JSIgnoredPromiseFromCall
                 this.data.play();
             }
         }

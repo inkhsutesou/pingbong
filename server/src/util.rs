@@ -21,3 +21,12 @@ pub fn clampf32(mut x: f32, min: f32, max: f32) -> f32 {
     }
     x
 }
+
+/// Maps the angle to be positive, wraps.
+pub fn positive_angle_wrap(a: f32) -> f32 {
+    if a < 0.0 {
+        a + 2.0 * std::f32::consts::PI
+    } else {
+        a
+    }
+}

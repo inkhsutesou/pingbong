@@ -1,7 +1,8 @@
-use packed_simd_2::f32x2;
+use crate::util::positive_angle_wrap;
 use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
 use std::ops::{Add, Div, Mul, Sub};
+use core_simd::f32x2;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Vector(f32x2);
@@ -20,7 +21,7 @@ impl Serialize for Vector {
 
 impl Vector {
     pub fn new(x: f32, y: f32) -> Self {
-        Self(f32x2::new(x, y))
+        Self(f32x2::from_array([x, y]))
     }
 
     pub fn zero() -> Self {
@@ -35,12 +36,12 @@ impl Vector {
 
     #[inline]
     pub fn x(&self) -> f32 {
-        self.0.extract(0)
+        self.0.to_array()[0]
     }
 
     #[inline]
     pub fn y(&self) -> f32 {
-        self.0.extract(1)
+        self.0.to_array()[1]
     }
 
     /// Calculates the perpendicular of the vector.
@@ -58,12 +59,13 @@ impl Vector {
     /// Calculates the squared length of this vector.
     #[inline]
     pub fn len_sqr(self) -> f32 {
-        self.x().mul_add(self.x(), self.y() * self.y())
+        (self.0 * self.0).horizontal_sum()
     }
 
     /// Calculates the dot product of this vector and another.
+    #[inline]
     pub fn dot(self, other: Self) -> f32 {
-        self.x().mul_add(other.x(), self.y() * other.y())
+        (self.0 * other.0).horizontal_sum()
     }
 
     /// 2D cross product.
@@ -97,6 +99,11 @@ impl Vector {
     /// Calculates the angle
     pub fn angle(&self) -> f32 {
         self.y().atan2(self.x())
+    }
+
+    /// Calculates the angle in range [0, 2pi[.
+    pub fn angle_positive(&self) -> f32 {
+        positive_angle_wrap(self.angle())
     }
 }
 

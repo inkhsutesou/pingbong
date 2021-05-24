@@ -1,3 +1,5 @@
+import {PROTOCOL_VERSION} from "./config";
+
 export const OP_ACK = 0;
 
 export const OP_RECV_JOINROOM = 1;
@@ -19,6 +21,8 @@ export const OP_SEND_LISTROOMS = 2;
 export const OP_SEND_LEAVEROOM = 1;
 export const OP_SEND_STARTROOM = 2;
 export const OP_SEND_SETTINGS = 3;
+export const OP_SEND_ADD_BOT = 4;
+export const OP_SEND_REMOVE_BOT = 5;
 
 export const TPS = 20;
 export const TIME_DELAY = 1000 / TPS;
@@ -204,4 +208,20 @@ export default class Connection {
             h(new PacketDecoder(view));
         }
     }
+}
+
+/**
+ * Creates the login packet
+ * @param {string} name The name of the player
+ * @returns {Uint8Array} The packet buffer
+ */
+export function createLoginPacket(name) {
+    const encoder = new TextEncoder();
+    const view = encoder.encode(name);
+    const buffer = new Uint8Array(new ArrayBuffer(1 + 1 + 1 + view.length));
+    buffer[0] = 0;
+    buffer[1] = PROTOCOL_VERSION;
+    buffer[2] = view.length;
+    buffer.set(view, 3);
+    return buffer;
 }

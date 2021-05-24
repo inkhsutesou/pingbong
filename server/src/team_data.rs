@@ -1,6 +1,6 @@
 // Delta verification, same as in the client.
 // Have to get the exact same value as JS.
-const MAX_MOVE: f32 = 0.157_079_64 * 2.0;
+pub const MAX_MOVE: f32 = 0.157_079_64 * 2.0;
 
 pub const SLOWDOWN_FACTOR: f32 = 1.0 / 8.0;
 
