@@ -48,7 +48,7 @@ export default function HowToPlay(props) {
                 <h2 className="text-2xl mt-5 mb-2">Power-up list</h2>
                 <div className="grid gap-4 grid-cols-2">
                     {POWERUP_INFOS.map((value, index) => (
-                        <div className="flex items-center">
+                        <div key={index} className="flex items-center">
                             <AnnotatedImg src={images[index]} title={value.title} />
                             <p className="ml-2">{value.title}</p>
                         </div>

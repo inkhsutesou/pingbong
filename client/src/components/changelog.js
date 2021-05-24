@@ -34,12 +34,12 @@ export default function Changelog(props) {
             <div className="mt-3">
                 {Object.keys(CHANGELOG).map((version, index) => {
                     return (
-                        <>
+                        <div key={index}>
                             <h4 className={`text-xl ${index > 0 ? 'mt-2' : ''}`}>{version}</h4>
                             <ul className="text-sm list-disc list-inside">
                                 {CHANGELOG[version]}
                             </ul>
-                        </>
+                        </div>
                     );
                 })}
             </div>

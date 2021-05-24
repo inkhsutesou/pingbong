@@ -144,7 +144,7 @@ const Lobby = (props) => {
                         </thead>
                         <tbody className="bg-gray-900">
                             {rooms.map(r => (
-                                <tr className="border-t border-gray-800">
+                                <tr key={r.roomId} className="border-t border-gray-800">
                                     <td className="p-3 md:p-4 break-all">{r.name}</td>
                                     <td className="p-3 md:p-4">
                                         <Icon

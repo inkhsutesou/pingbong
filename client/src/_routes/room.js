@@ -110,7 +110,7 @@ const GameCanvas = (props) => {
                 <div id="tlgroup" className="hud-tl flex flex-col items-start">
                     {!finalScores && (<div id="scorecontainer">
                         {[...Array(props.startState.teamCount)].map((_, i) => (
-                            <ScoreThing teamNr={i} prefix="score-team" />
+                            <ScoreThing teamNr={i} key={i} prefix="score-team" />
                         ))}
                     </div>)}
                     <div>
@@ -123,7 +123,7 @@ const GameCanvas = (props) => {
                 {finalScores && (<div id="finalcontainer">
                     <ol>
                         {finalScores.map(item => (
-                            <li>
+                            <li key={item.teamNr}>
                                 <ScoreThing teamNr={item.teamNr} prefix="final-score-team">
                                     {item.score}
                                 </ScoreThing>
@@ -385,7 +385,7 @@ const Room = (props) => {
                                     {hostId === clientId ? (
                                         <>
                                             {[0, 1].map(i => (
-                                                <div className="inline-flex items-center">
+                                                <div key={i} className="inline-flex items-center">
                                                     <input
                                                         disabled={clientId !== hostId}
                                                         onchange={_e => setMatchTime(i)}

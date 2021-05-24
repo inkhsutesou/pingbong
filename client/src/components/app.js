@@ -17,7 +17,6 @@ import Credits from './credits';
 import Button from "./button";
 
 import logo from '../assets/logo.png';
-import {PROTOCOL_VERSION} from "../config";
 import HowToPlay from "./howtoplay";
 import Changelog, {LATEST_VERSION} from "./changelog";
 import {setAchievementSpawnCallback} from "../achievement";
