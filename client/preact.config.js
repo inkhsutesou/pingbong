@@ -59,7 +59,7 @@ module.exports = (config, env, helpers, params = defaultParams) => {
       extractComments: false,
       sourceMap: false,//true,
     }));
-    config.plugins.push(new WebpackObfuscator({
+    /*config.plugins.push(new WebpackObfuscator({
       rotateStringArray: true,
       identifierNamesGenerator: 'mangled-shuffled',
       debugProtection: false,
@@ -70,7 +70,7 @@ module.exports = (config, env, helpers, params = defaultParams) => {
       compact: true,
       splitStrings: false,
       target: 'browser',
-    }));
+    }));*/
   }
   return config;
 };
