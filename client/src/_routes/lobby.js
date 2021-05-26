@@ -180,7 +180,7 @@ const Lobby = (props) => {
                         <br />
                         <Button className="mt-5" color="green" onClick={_e => {
                             getConnection().sendByte(OP_SEND_CREATEROOM);
-                        }}><Icon name="plus-circle" className="btn-icon" /><span className="hidden sm:inline">Create room</span></Button>
+                        }}><Icon name="plus-circle" className="btn-icon" /><span>Create room</span></Button>
                         <div className="mt-8">
                             <p className="mb-2 text-sm text-gray-400">Or watch some gameplay</p>
                             <Trailer />
