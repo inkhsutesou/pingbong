@@ -1,6 +1,11 @@
 import Modal from "./modal";
 
 export const CHANGELOG = {
+    '0.9.10': (
+        <>
+            <li>Fixed copy URL when embedded</li>
+        </>
+    ),
     '0.9.9': (
         <>
             <li>Game back online</li>

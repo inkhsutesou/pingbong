@@ -324,7 +324,17 @@ const Room = (props) => {
                         fixedRoute('/');
                     }}><Icon name="chevron-left" /><span>Leave</span></Button>
                     <Button color="blue" onClick={_e => {
-                        navigator.clipboard.writeText(location.href).catch(console.error);
+                        //navigator.clipboard.writeText(location.href).catch(console.error);
+                        const el = document.createElement('textarea');
+                        el.value = window.location.href;
+                        el.setAttribute('readonly', '');
+                        el.style.position = 'absolute';
+                        el.style.left = '-9999px';
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(el);
+
                         const orig = joinUrlLabel;
                         setJoinUrlLabel('URL copied!');
                         setTimeout(() => {
